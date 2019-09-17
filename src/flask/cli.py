@@ -10,6 +10,8 @@
 """
 from __future__ import print_function
 
+from pprint import pprint
+
 import ast
 import inspect
 import os
@@ -54,7 +56,7 @@ def find_best_app(script_info, module):
     application in the module or raises an exception.
     """
     from . import Flask
-
+    print("find_best_app: module ", module )
     # Search for the most common names first.
     for attr_name in ("app", "application"):
         app = getattr(module, attr_name, None)
@@ -78,6 +80,8 @@ def find_best_app(script_info, module):
     for attr_name in ("create_app", "make_app"):
         app_factory = getattr(module, attr_name, None)
 
+        # JOY: for project flask/examples/tutorial/flaskr/__init__.py,
+        #      "create_app" is such a app_factory.
         if inspect.isfunction(app_factory):
             try:
                 app = call_factory(script_info, app_factory)
@@ -162,13 +166,14 @@ def find_app_by_string(script_info, module, app_name):
         )
 
     name, args = match.groups()
-
+    print("find_app_by_string: splited name, args: ", name, args)
     try:
         attr = getattr(module, name)
     except AttributeError as e:
         raise NoAppException(e.args[0])
 
     if inspect.isfunction(attr):
+        print("find_app_by_string: isfunction ", attr)
         if args:
             try:
                 args = ast.literal_eval("({args},)".format(args=args))
@@ -196,6 +201,7 @@ def find_app_by_string(script_info, module, app_name):
         app = attr
 
     if isinstance(app, Flask):
+        print("find_app_by_string: is Flask ", attr)
         return app
 
     raise NoAppException(
@@ -238,6 +244,7 @@ def locate_app(script_info, module_name, app_name, raise_if_not_found=True):
 
     try:
         __import__(module_name)
+        # JOY: import the module_name here. If success, sys.modules can contain it.
     except ImportError:
         # Reraise the ImportError if it occurred within the imported module.
         # Determine this by checking whether the trace has a depth > 1.
@@ -251,7 +258,10 @@ def locate_app(script_info, module_name, app_name, raise_if_not_found=True):
         else:
             return
 
+    print("locate_app : module_name: ", module_name)
+
     module = sys.modules[module_name]
+    print("got module: ", module)
 
     if app_name is None:
         return find_best_app(script_info, module)
@@ -297,6 +307,7 @@ class DispatchingApp(object):
     """
 
     def __init__(self, loader, use_eager_loading=False):
+        print("use_eager_loading: ", use_eager_loading)
         self.loader = loader
         self._app = None
         self._lock = Lock()
@@ -385,6 +396,8 @@ class ScriptInfo(object):
                     re.split(r":(?![\\/])", self.app_import_path, 1) + [None]
                 )[:2]
                 import_name = prepare_import(path)
+                print("import_name: , name: ", import_name, name)
+                # JOY: loadin the given self.app_import_path in run-time
                 app = locate_app(self, import_name, name)
             else:
                 for path in ("wsgi.py", "app.py"):
@@ -393,7 +406,8 @@ class ScriptInfo(object):
 
                     if app:
                         break
-
+        print("ScriptInfo.load_app: ", self, self.create_app,
+                self.app_import_path, app)
         if not app:
             raise NoAppException(
                 "Could not locate a Flask application. You did not provide "
@@ -493,6 +507,15 @@ class FlaskGroup(AppGroup):
         set_debug_flag=True,
         **extra
     ):
+        print("FlaskGroup __init__ args: ",
+            self,
+            add_default_commands,
+            create_app,
+            add_version_option,
+            load_dotenv,
+            set_debug_flag,
+            extra
+                )
         params = list(extra.pop("params", None) or ())
 
         if add_version_option:
@@ -509,6 +532,13 @@ class FlaskGroup(AppGroup):
             self.add_command(routes_command)
 
         self._loaded_plugin_commands = False
+
+        print("FlaskGroup END __init__ args: ",
+            self,
+            self.load_dotenv,
+            self.create_app,
+            self.set_debug_flag
+                )
 
     def _load_plugin_commands(self):
         if self._loaded_plugin_commands:
@@ -833,6 +863,7 @@ def run_command(
     The reloader and debugger are enabled by default if
     FLASK_ENV=development or FLASK_DEBUG=1.
     """
+    print("WHEN AM I CALLED??? run_command: ", info, info.app_import_path)
     debug = get_debug_flag()
 
     if reload is None:
@@ -844,11 +875,24 @@ def run_command(
     if eager_loading is None:
         eager_loading = not reload
 
+    print("START OF show_server_banner")
     show_server_banner(get_env(), debug, info.app_import_path, eager_loading)
+    print(" END  OF show_server_banner")
     app = DispatchingApp(info.load_app, use_eager_loading=eager_loading)
 
     from werkzeug.serving import run_simple
 
+    print("run_command: calling run_simple with : ",
+        host,
+        port,
+        app,
+        extra_files,
+        dict(
+        use_reloader=reload,
+        use_debugger=debugger,
+        threaded=with_threads,
+        ssl_context=cert),
+            )
     run_simple(
         host,
         port,
