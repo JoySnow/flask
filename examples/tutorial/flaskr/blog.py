@@ -56,6 +56,9 @@ def get_post(id, check_author=True):
 
     return post
 
+# bp.route(args)  --> decorator
+# decorator( login_required 
+
 
 @bp.route("/create", methods=("GET", "POST"))
 @login_required

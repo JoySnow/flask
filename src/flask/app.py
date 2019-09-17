@@ -77,6 +77,7 @@ def _make_timedelta(value):
         return timedelta(seconds=value)
     return value
 
+##setupmethod(add_url_rule)
 
 def setupmethod(f):
     """Wraps a method so that it performs a check in debug mode if the
@@ -84,6 +85,9 @@ def setupmethod(f):
     """
 
     def wrapper_func(self, *args, **kwargs):
+        print("DUG: ==> app.py: setupmethod: wrapper_func: called with self: ",
+                self, f, args, kwargs)
+
         if self.debug and self._got_first_request:
             raise AssertionError(
                 "A setup function was called after the "
@@ -95,8 +99,12 @@ def setupmethod(f):
                 "before the application starts serving requests."
             )
         return f(self, *args, **kwargs)
+    print("DUG: => app.py: setupmethod: called with func: ", f, wrapper_func)
 
-    return update_wrapper(wrapper_func, f)
+    ret_func = update_wrapper(wrapper_func, f)
+    print("DUG: => app.py: setupmethod: about returnning ret_func: ", ret_func)
+    print(wrapper_func is ret_func, getattr(ret_func, '__wrapped__'))
+    return ret_func
 
 
 class Flask(_PackageBoundObject):
@@ -398,6 +406,8 @@ class Flask(_PackageBoundObject):
     #: resources contained in the package.
     root_path = None
 
+    print("OF FLASK")
+
     def __init__(
         self,
         import_name,
@@ -411,6 +421,20 @@ class Flask(_PackageBoundObject):
         instance_relative_config=False,
         root_path=None,
     ):
+        print("Init Flask ................")
+        print("__init__ args: ",
+            import_name,
+            static_url_path,
+            static_folder,
+            static_host,
+            host_matching,
+            subdomain_matching,
+            template_folder,
+            instance_path,
+            instance_relative_config,
+            root_path,
+                )
+
         _PackageBoundObject.__init__(
             self, import_name, template_folder=template_folder, root_path=root_path
         )
@@ -1308,7 +1332,9 @@ class Flask(_PackageBoundObject):
                         added and handled by the standard request handling.
         """
 
+        print("DUG ||||||||||| => APP route called with: ", rule, options)
         def decorator(f):
+            print("DUG ||||||||||| ===>  APP route - decorator called with: ", f)
             endpoint = options.pop("endpoint", None)
             self.add_url_rule(rule, endpoint, f, **options)
             return f

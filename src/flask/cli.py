@@ -406,7 +406,7 @@ class ScriptInfo(object):
 
                     if app:
                         break
-        print("ScriptInfo.load_app: ", self, self.create_app,
+        print("=========================ScriptInfo.load_app: ", self, self.create_app,
                 self.app_import_path, app)
         if not app:
             raise NoAppException(

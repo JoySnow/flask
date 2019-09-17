@@ -14,6 +14,7 @@ from werkzeug.security import generate_password_hash
 from flaskr.db import get_db
 
 bp = Blueprint("auth", __name__, url_prefix="/auth")
+print("in auto, bp: ", bp)
 
 
 def login_required(view):
@@ -26,6 +27,7 @@ def login_required(view):
 
         return view(**kwargs)
 
+    print("DUNG: |||||||||, login_required @ wrapped_view: ", wrapped_view, view)
     return wrapped_view
 
 
@@ -114,3 +116,7 @@ def logout():
     """Clear the current session, including the stored user id."""
     session.clear()
     return redirect(url_for("index"))
+
+
+print("END OF AUTH.py: ---------")
+print("bp: ", bp, bp.__dict__)

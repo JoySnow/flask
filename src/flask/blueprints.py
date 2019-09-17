@@ -243,6 +243,9 @@ class Blueprint(_PackageBoundObject):
             blueprint has been registered on the application.
         """
         self._got_registered_once = True
+
+        # JOY: this state instance is for one-time usage only, it help with the
+        # function registion and other things for app.
         state = self.make_setup_state(app, options, first_registration)
 
         if self.has_static_folder:
@@ -254,6 +257,9 @@ class Blueprint(_PackageBoundObject):
 
         for deferred in self.deferred_functions:
             deferred(state)
+
+        print("DUG: ====== BP register: state: ", state )
+        # JOY: his state die here.
 
         cli_resolved_group = options.get("cli_group", self.cli_group)
 
@@ -274,7 +280,9 @@ class Blueprint(_PackageBoundObject):
         :func:`url_for` function is prefixed with the name of the blueprint.
         """
 
+        print("DUG ||||||||||| => BP route called with: ", rule, options)
         def decorator(f):
+            print("DUG ||||||||||| ===>  BP route - decorator called with: ", f)
             endpoint = options.pop("endpoint", f.__name__)
             self.add_url_rule(rule, endpoint, f, **options)
             return f

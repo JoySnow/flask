@@ -6,6 +6,9 @@ from flask import Flask
 def create_app(test_config=None):
     """Create and configure an instance of the Flask application."""
     app = Flask(__name__, instance_relative_config=True)
+    print("The new created app, show it's config : ", app.config)
+    print(app.config['SECRET_KEY'])
+    print(app.config.get('DATABASE'))
     app.config.from_mapping(
         # a default secret that should be overridden by instance config
         SECRET_KEY="dev",
@@ -26,9 +29,13 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    @app.route("/hello")
+    print(app.url_map)
+    @app.route("/hello", endpoint="abc")
     def hello():
         return "Hello, World!"
+    print(app.url_map)
+    print(app.view_functions)
+    print(app.view_functions['abc'])
 
     # register the database commands
     from flaskr import db
@@ -38,6 +45,7 @@ def create_app(test_config=None):
     # apply the blueprints to the app
     from flaskr import auth, blog
 
+    # TODO: continue the digging
     app.register_blueprint(auth.bp)
     app.register_blueprint(blog.bp)
 
@@ -47,4 +55,5 @@ def create_app(test_config=None):
     # the tutorial the blog will be the main index
     app.add_url_rule("/", endpoint="index")
 
+    print("------------- Just before create_app's return app: ", app)
     return app
